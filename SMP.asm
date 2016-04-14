@@ -3,13 +3,13 @@
 .stack 100h
 .data
  
-    number      db  215d    ;variable 'number' stores the random value
+    number      db  215d    ; variabila 'number' memoram numarul noroc
  
-    ;declarations used to add LineBreak to strings
+    ; declaratii pentru a adauga LineBreak in siruri
     CR          equ 13d
     LF          equ 10d
  
-    ;String messages used through the application
+    ;Mesaje de tip string utilizate in aplicatie
     prompt      db  CR, LF,'Ghiceste numarul meu norocos : $'
     lessMsg     db  CR, LF,'Numarul meu norocos este mai mic ','$'
     moreMsg     db  CR, LF,'Numarul meu norocos este mai mare ', '$'
@@ -17,8 +17,8 @@
     overflowMsg db  CR, LF,'Ai depasit intervalul [0:250]!', '$'
     retry       db  CR, LF,'Vrei sa incercam dinou? [y/n] ? ' ,'$'
  
-    guess       db  0d      ;variable user to store value user entered
-    errorChk    db  0d      ;variable user to check if entered value is in range
+    guess       db  0d      ;variabila 'guess; in care stocam ce a introdus user-ul
+    errorChk    db  0d      ;variabila 'errorChk' in care verificam daca numarul introdus este in intervalul dorit
  
     param       label Byte
  
@@ -26,154 +26,153 @@
            
 start:
  
-    ; --- BEGIN resting all registers and variables to 0h
+    ; Punem registrii si variabilele pe 0h
     MOV ax, 0h
     MOV bx, 0h
     MOV cx, 0h
     MOV dx, 0h
  
-    MOV BX, OFFSET guess    ; get address of 'guess' variable in BX.
-    MOV BYTE PTR [BX], 0d   ; set 'guess' to 0 (decimal)
+    MOV BX, OFFSET guess    ;   setam adresa variabilei 'guess' in BX
+    MOV BYTE PTR [BX], 0d   ;  setam 'guess' la 0 (decimal)
  
-    MOV BX, OFFSET errorChk ; get address of 'errorChk' variable in BX.
-    MOV BYTE PTR [BX], 0d   ; set 'errorChk' to 0 (decimal)
+    MOV BX, OFFSET errorChk ;    setam adresa variabilei 'errorChk' in BX
+    MOV BYTE PTR [BX], 0d   ;    setam 'errorChk' la 0 (decimal)
     ; --- END resting
  
-    MOV ax, @data           ; get address of data to AX
-    MOV ds, ax              ; set 'data segment' to value of AX which is 'address of data'
-    MOV dx, offset prompt   ; load address of 'prompt' message to DX
+    MOV ax, @data           ;  setam adresa data in AX
+    MOV ds, ax              ;   setam data segmentul la valoarea lui AX
+    MOV dx, offset prompt   ;  incarcam adresa mesajului 'prompt' in DX
  
-    MOV ah, 9h              ; Write string to STDOUT (for DOS interrupt)
-    INT 21h                 ; DOS INT 21h (DOS interrupt)
+    MOV ah, 9h              ;  scriem sir pe STDOUT ( pentru intreruperi DOS) 
+    INT 21h                 ;   setam DOS int 21h ( pentru intreruperi DOS ) 
  
-    MOV cl, 0h              ; set CL to 0  (Counter)
-    MOV dx, 0h              ; set DX to 0  (Data register used to store user input)
+    MOV cl, 0h              ;setam CL la 0 (Counter) 
+    MOV dx, 0h              ;   setam DX la 0 ( registru de date folosit pentru a stroca datele introduse de user)
  
-; -- BEGIN reading user input
+;  Incepem sa citim datele introduse de user
 while:
  
-    CMP     cl, 5d          ; compare CL with 10d (5 is the maximum number of digits allowed)
-    JG      endwhile        ; IF CL > 5 then JUMP to 'endwhile' label
+    CMP     cl, 5d          ; comparam CL cu 10d ( 5 este numarl maxid de cifre permise )
+    JG      endwhile        ;  daca CL > 5 atunci sarim la 'endwhile' 
  
-    MOV     ah, 1h          ; Read character from STDIN into AL (for DOS interrupt)
-    INT     21h             ; DOS INT 21h (DOS interrupt)
+    MOV     ah, 1h          ;  citim caracterul din STDIN in AL ( pentru intreruperi DOS ) 
+    INT     21h             ; Dos int 21h ( pentru intreruperi DOS ) 
  
-    CMP     al, 0Dh         ; compare read value with 0Dh which is ASCII code for ENTER key
-    JE      endwhile        ; IF AL = 0Dh, Enter key pressed, JUMP to 'endwhile'
+    CMP     al, 0Dh         ;  comparam valoarea introdusa cu 0Dh care reprezinta tasta Enter in codul ASCII
+    JE      endwhile        ;    daca AL = 0Dh , inseamna ca a fost apasata tasta enter deci sarim la 'endwhile'
  
-    SUB     al, 30h         ; Substract 30h from input ASCII value to get actual number. (Because ASCII 30h = number '0')
-    MOV     dl, al          ; Move input value to DL
-    PUSH    dx              ; Push DL into stack, to get it read to read next input
-    INC     cl              ; Increment CL (Counter)
+    SUB     al, 30h         ;  substragem 30h din niput in codul ASCII si obtinem numarul actual ( deoarece in codul ASCII 30 h = numarul 0 )
+    MOV     dl, al          ;  mutam valoarea introdusa in DL 
+    PUSH    dx              ; impingem DL in stiva , ca sa citim urmatorul input
+    INC     cl              ; incrementam CL ( counter ) 
  
-    JMP while               ; JUMP back to label 'while' if reached
+    JMP while               ;    sarim inapoi la label-ul 'while' daca este ajuns
  
 endwhile:
-; -- END reading user input
+; -- terminam citirea de la tastatura 
  
-    DEC cl                  ; decrement CL by one to reduce increament made in last iteration
+    DEC cl                  ; decrementam CL cu 1 pentru a reduce incrementarea facuta la ultima iteratie
  
-    CMP cl, 02h             ; compare CL with 02, because only 3 numbers can be accepted as IN RANGE
-    JG  overflow            ; IF CL (number of input characters) is greater than 3 JUMP to 'overflow' label
+    CMP cl, 02h             ; comparam CL cu 02 , deoarece numai 3 numere pot fi acceptate in raza 
+    JG  overflow            ;  daca CL ( numarul introdus de caractere ) e mai mare decat 3 atunci sarim la 'overflow'
  
-    MOV BX, OFFSET errorChk ; get address of 'errorChk' variable in BX.
-    MOV BYTE PTR [BX], cl   ; set 'errorChk' to value of CL
+    MOV BX, OFFSET errorChk ;  obtinem adresa variabilei 'errorChk' in BX
+    MOV BYTE PTR [BX], cl   ;  setam valoarea 'errorChk' la CL 
  
-    MOV cl, 0h              ; set CL to 0, because counter is used in next section again
+    MOV cl, 0h              ;  setam CL la 0 , deoarece counter-ul este folosit in urmatoarea sectiune dinou
  
-; -- BEGIN processing user input
+; -- Incepem sa procesam datele introduse de user 
  
-; -- Create actual NUMERIC representation of
-;--   number read from user as three characters
+;    Creem reprezentarea numerica a numarului citit de la user
+
 while2:
  
     CMP cl,errorChk
     JG endwhile2
  
-    POP dx                  ; POP DX value stored in stack, (from least-significant-digit to most-significant-digit)
+    POP dx                  ; POP DX valoarea stocata in stiva
  
-    MOV ch, 0h              ; clear CH which is used in inner loop as counter
-    MOV al, 1d              ; initially set AL to 1   (decimal)
-    MOV dh, 10d             ; set DH to 10  (decimal)
+    MOV ch, 0h              ;stergem CH care este folosit in loop-ul interior ca counter
+    MOV al, 1d              ;    setam AL la 1 (decimal)
+    MOV dh, 10d             ;     setam DH la 10 (decimal)
  
- ; -- BEGIN loop to create power of 10 for related possition of digit
- ; --  IF CL is 2
- ; --   1st loop will produce  10^0
- ; --   2nd loop will produce  10^1
- ; --   3rd loop will produce  10^2
+ ;  incepem bucla pentru a creea puterile lui 10 
+ ;     daca CL este 2 
+ ;     1 bucla va produce 10^0
+ ;    a 2-a bucla va produce 10^1
+ ;     a 3-a bucla va produce 10^2
  while3:
  
-    CMP ch, cl              ; compare CH with CL
-    JGE endwhile3           ; IF CH >= CL, JUMP to 'endwhile3
+    CMP ch, cl              ; comparam CH with CL 
+    JGE endwhile3           ; daca CH >= CL , sarim la 'endwhile3'
  
-    MUL dh                  ; AX = AL * DH whis is = to (AL * 10)
+    MUL dh                  ; AX = AL * DH      
  
-    INC ch                  ; increment CH
+    INC ch                  ; incrementam CH
     JMP while3
  
  endwhile3:
- ; -- END power calculation loop
+ ; --terminam bucla de calcul al puterilor
  
-    ; now AL contains 10^0, 10^1 or 10^2 depending on the value of CL
+    ;acum AL contine 10^0 , 10^1 sau 10^2 depinzand de valoarea din CL 
  
-    MUL dl                  ; AX = AL * DL, which is actual positional value of number
+    MUL dl                  ; AX = AL * DL
  
-    JO  overflow            ; If there is an overflow JUMP to 'overflow'label (for values above 300)
+    JO  overflow            ;daca este un overflow sarim la 'overflow'
  
-    MOV dl, al              ; move restlt of multiplication to DL
-    ADD dl, guess           ; add result (actual positional value of number) to value in 'guess' variable
+    MOV dl, al              ;    mutam restlt multiplicat in DL 
+    ADD dl, guess           ; adaugam rezultatul valorii in variabila 'guess'
+  
+    JC  overflow            ; daca avem un overflow sarim iar la 'overflow' 
  
-    JC  overflow            ; If there is an overflow JUMP to 'overflow'label (for values above 255 to 300)
+    MOV BX, OFFSET guess    ;  luam adresa variabilei 'guess' in BX 
+    MOV BYTE PTR [BX], dl   ; setam 'errorChk' la valoarea lui DL 
  
-    MOV BX, OFFSET guess    ; get address of 'guess' variable in BX.
-    MOV BYTE PTR [BX], dl   ; set 'errorChk' to value of DL
+    INC cl                  ;          incrementam CL ( counter ) 
  
-    INC cl                  ; increment CL counter
- 
-    JMP while2              ; JUMP back to label 'while2'
+    JMP while2              ;           sarim inapoi la label-ul 'while2'
  
 endwhile2:
-; -- END processing user input
+; -- terminam procesarea datelor introduse de user 
  
-    MOV ax, @data           ; get address of data to AX
-    MOV ds, ax              ; set 'data segment' to value of AX which is 'address of data'
+    MOV ax, @data           ;       luam adresa datei din AX 
+    MOV ds, ax              ;   setam 'data segment' la valoare lui AX 
  
-    MOV dl, number          ; load original 'number' to DL
-    MOV dh, guess           ; load guessed 'number' to DH
+    MOV dl, number          ;        incarcam 'number' original in DL 
+    MOV dh, guess           ;     incarcam 'number' ghicit in DH 
  
-    CMP dh, dl              ; compare DH and DL (DH - DL)
+    CMP dh, dl              ; commparam DH si DL (DH - DL)               
  
-    JC greater              ; if DH (GUESS) > DL (NUMBER) cmparision will cause a Carry. Becaus of that if carry has been occured print that 'number is more'
-    JE equal                ; IF DH (GUESS) = DL (NUMBER) print that guess is correct
-    JG lower                ; IF DH (GUESS) < DL (NUMBER) print that number is less
+    JC greater              ; Daca DH (GUESS) > DL (NUMBER) printam ca numarul este mai mare
+    JE equal                ; Daca DH (GUESS) = DL (NUMBER) printam ca numarul ghicit este corect
+    JG lower                ; Daca DH (GUESS) < DL (NUMBER) printam ca numarul este mai mic 
  
 equal:
     mov ah, 02
-    mov dl, 07h ;07h is the value to produce the beep tone
-    int 21h ;produce the sound  
-    int 21h ;produce the sound
-    int 21h ;produce the sound 
-    int 21h ;produce the sound
-    MOV dx, offset equalMsg ; load address of 'equalMsg' message to DX
-    MOV ah, 9h              ; Write string to STDOUT (for DOS interrupt)
-    INT 21h                 ; DOS INT 21h (DOS interrupt)
+    mov dl, 07h ;07h este valoarea care produce sunet
+    int 21h ;producem sunet
+    int 21h ;producem sunet
+    int 21h ;producem sunet
+    int 21h ;producem sunet
+    MOV dx, offset equalMsg ;   incarcam adresa 'equalMsg'   in DX
+    MOV ah, 9h              ;    scriem situl in STDOUT 
+    INT 21h                 ; DOS INT 21h (DOS interrupt)         
     
     
      mov     ax, 3
     int     10h
     
-    ; blinking disabled for compatibility with dos,
-    ; emulator and windows prompt do not blink anyway.
+
     mov     ax, 1003h
     mov     bx, 0      ; disable blinking.
     int     10h
     
     
                    
-    mov     dl, 0   ; current column.
-    mov     dh, 0   ; current row.
+    mov     dl, 0   ; coloana curenta
+    mov     dh, 0   ;  randul curent
     
-    mov     bl, 0   ; current attributes.
+    mov     bl, 0   ; atributele curente
     
     jmp     next_char
     
@@ -185,7 +184,7 @@ equal:
     
     next_char:
     
-    ; set cursor position at (dl,dh):
+    ;setam pozitia cursonului la (dl,dh):
     mov     ah, 02h
     int     10h
     
@@ -195,7 +194,7 @@ equal:
     mov     ah, 09h
     int     10h
     
-    inc     bl      ; next attributes.
+    inc     bl      ; urmatoarele atribute
     
     inc     dl
     cmp     dl, 16
@@ -204,59 +203,57 @@ equal:
     
     stop_print:
     
-    ; set cursor position at (dl,dh):
+    ; ssetam pozitia cursonului la (dl,dh):
     mov     dl, 10  ; column.
     mov     dh, 5   ; row.
     mov     ah, 02h
     int     10h
     
-    ; test of teletype output,
-    ; it uses color attributes
-    ; at current cursor position:
+  ; folosim atribute colorate pe pozitia curenta a cursonului 
     mov     al, 'x'
     mov     ah, 0eh
     int     10h
     
     
-    ; wait for any key press:
+    ; asteptam apasarea unui buton : 
     mov ah, 0
     int 16h
       
     
-    JMP exit                ; JUMP to end of the program
+    JMP exit                ;sarim la sfarsitul programului 
  
 greater:
     
     mov ah, 02
-    mov dl, 07h ;07h is the value to produce the beep tone
-    int 21h ;produce the sound  
-    int 21h ;produce the sound
-    int 21h ;produce the sound
-    int 21h ;produce the sound
-    MOV dx, offset moreMsg  ; load address of 'moreMsg' message to DX
-    MOV ah, 9h              ; Write string to STDOUT (for DOS interrupt)
+    mov dl, 07h ;07h este valoarea care produce sunet
+    int 21h ;producem sunet
+    int 21h ;producem sunet
+    int 21h ;producem sunet
+    int 21h ;producem sunet
+    MOV dx, offset moreMsg  
+    MOV ah, 9h             
     INT 21h                 ; DOS INT 21h (DOS interrupt)
-    JMP start               ; JUMP to beginning of the program
+    JMP start              
  
 lower:     
 
     mov ah, 02
-    mov dl, 07h ;07h is the value to produce the beep tone
-    int 21h ;produce the sound  
-    int 21h ;produce the sound
-    int 21h ;produce the sound 
-    int 21h ;produce the sound
-    MOV dx, offset lessMsg  ; load address of 'lessMsg' message to DX
-    MOV ah, 9h              ; Write string to STDOUT (for DOS interrupt)
-    INT 21h                 ; DOS INT 21h (DOS interrupt)
-    JMP start               ; JUMP to beginning of the program
+    mov dl, 07h ;07h este valoarea care produce sunet
+    int 21h ;producem sunet
+    int 21h ;producem sunet
+    int 21h ;producem sunet
+    int 21h ;producem sunet
+    MOV dx, offset lessMsg  
+    MOV ah, 9h             
+    INT 21h                 
+    JMP start               ; sarim la sfarsit
  
 overflow:
  
-    MOV dx, offset overflowMsg ; load address of 'overflowMsg' message to DX
-    MOV ah, 9h              ; Write string to STDOUT (for DOS interrupt)
-    INT 21h                 ; DOS INT 21h (DOS interrupt)
-    JMP start               ; JUMP to beginning of the program
+    MOV dx, offset overflowMsg 
+    MOV ah, 9h              
+    INT 21h                 
+    JMP start               
  
 exit: 
 MOV dl, 10
@@ -337,25 +334,24 @@ INT 21h
 MOV dl, 13
 MOV ah, 02h
 INT 21h
-; -- Ask user if he needs to try again if guess was successful
+; intrebam userul daca vrea sa incerce dinou dupa ce a ghicit numarul 
 retry_while:
  
-    MOV dx, offset retry    ; load address of 'prompt' message to DX
+    MOV dx, offset retry    ; incarcam adresele 'prompt' in DX 
  
-    MOV ah, 9h              ; Write string to STDOUT (for DOS interrupt)
+    MOV ah, 9h              ;   scriem sirul in STDOUT
     INT 21h                 ; DOS INT 21h (DOS interrupt)
  
-    MOV ah, 1h              ; Read character from STDIN into AL (for DOS interrupt)
+    MOV ah, 1h              ;  citim caracterele din STDIN in AL 
     INT 21h                 ; DOS INT 21h (DOS interrupt)
  
-    CMP al, 6Eh             ; check if input is 'n'
-    JE return_to_DOS        ; call 'return_to_DOS' label is input is 'n'
+    CMP al, 6Eh             ;    verificam daca user-ul a introdus 'n'
+    JE return_to_DOS        
+    
+    CMP al, 79h             ;  verificam daca user-ul a introdus 'y'
+    JE restart              
  
-    CMP al, 79h             ; check if input is 'y'
-    JE restart              ; call 'restart' label is input is 'y' ..
-                            ;   "JE start" is not used because it is translated as NOP by emu8086
- 
-    JMP retry_while         ; if input is neither 'y' nor 'n' re-ask the same question
+    JMP retry_while         ; daca nu a introdus nici y nici n , repunem intrebarea 
  
 retry_endwhile:
  
